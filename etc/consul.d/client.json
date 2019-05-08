@@ -1,0 +1,17 @@
+{
+    
+"bind_addr": "192.168.2.14", 
+"client_addr": "0.0.0.0",
+"datacenter": "dc1",
+"data_dir": "/var/consul/data",
+"log_level": "INFO",
+"enable_syslog": true,
+"enable_debug": true,
+"node_name": "consul-c1",
+"server": false,
+"service": {"name": "Apache", "tags": ["HTTP"], "port": 80},
+"rejoin_after_leave": true,
+"retry_join": [
+    "192.168.2.11:8301"
+    ]
+}

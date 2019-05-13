@@ -84,21 +84,23 @@ elif [ ${CONSUL_NODE} = "leader02" ]; then
 
 #if [[ "${HOSTNAME}" =~ "leader" ]] ; then
 
-
-  #echo "vault token:"
-  #cat /root/.vault-token
-  #echo -e "\nvault token is on /root/.vault-token"
+#  vagrant ssh leader01
+#  sleep 5
+#  sudo su -
+#  echo "vault token:"
+#  cat /root/.vault-token
+#  echo -e "\nvault token is on /root/.vault-token"
   
   # enable secret KV version 1
-  #sudo VAULT_ADDR="http://${IP}:8200" vault secrets enable -version=1 kv
+#  sudo VAULT_ADDR="http://${IP}:8200" vault secrets enable -version=1 kv
   
-  #grep VAULT_TOKEN ~/.bash_profile || {
-  #  echo export VAULT_TOKEN=\`cat /root/.vault-token\` | sudo tee -a ~/.bash_profile
-  #}
+#  grep VAULT_TOKEN ~/.bash_profile || {
+#    echo export VAULT_TOKEN=\`cat /root/.vault-token\` | sudo tee -a ~/.bash_profile
+#  }
 
-  #grep VAULT_ADDR ~/.bash_profile || {
-  #  echo export VAULT_ADDR=http://${IP}:8200 | sudo tee -a ~/.bash_profile
-  #}
+#  grep VAULT_ADDR ~/.bash_profile || {
+#    echo export VAULT_ADDR=http://${IP}:8200 | sudo tee -a ~/.bash_profile
+#  }
   
 
 

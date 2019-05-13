@@ -58,8 +58,6 @@ s2.vm.provision :shell, :path => "scripts/install_vault_1.sh", env: { "CONSUL_NO
        "VAULT_ADDR" => "http://192.168.2.15:8200"}
 end
 
-
-
 end
 
 

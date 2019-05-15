@@ -4,6 +4,7 @@ IFACE=`route -n | awk '$1 == "192.168.2.0" {print $8}'`
 CIDR=`ip addr show ${IFACE} | awk '$2 ~ "192.168.2" {print $2}'`
 IP=${CIDR%%/24}
 
+
 if [ -d /vagrant ]; then
   LOG="/vagrant/logs/vault_${HOSTNAME}.log"
 else
@@ -43,10 +44,10 @@ if [ ${CONSUL_NODE} = "leader01" ]; then
   sudo killall vault &>/dev/null
 
   #lets delete old consul storage
-  sudo consul kv delete -recurse vault
+  #sudo consul kv delete -recurse vault
 
   #delete old token if present
-  [ -f /root/.vault-token ] && sudo rm /root/.vault-token
+  #[ -f /root/.vault-token ] && sudo rm /root/.vault-token
 
 
   #start vault
@@ -54,7 +55,31 @@ if [ ${CONSUL_NODE} = "leader01" ]; then
   #sudo /usr/local/bin/vault server  -log-level=trace -config /vagrant/etc/vault/vault_conf.hcl  -dev -dev-listen-address=${IP}:8200   &> ${LOG} &
   sudo /usr/local/bin/vault server  -config /vagrant/etc/vault/vault_conf.hcl  &> ${LOG} &
   echo vault started
-  sleep 3 
+  sleep 5
+
+  sudo apt install -y jq
+  initResult=$(VAULT_ADDR=http://192.168.2.14:8200 vault operator init -format json -key-shares 1 -key-threshold 1)
+  unsealKey1=$(echo -n $initResult | jq -r '.unseal_keys_b64[0]')
+  rootToken1=$(echo -n $initResult | jq -r '.root_token')
+  echo -n $unsealKey1 > unsealKey1
+  echo -n $rootToken1 > rootToken1
+
+  #echo -n $unsealKey1  2>&1 | tee ~/SomeFile.txt
+  echo -n $unsealKey1  2>&1 | tee /vagrant/SomeKey.txt
+  echo -n $rootToken1  2>&1 | tee /vagrant/SomeToken.txt
+
+  VAULT_ADDR=http://192.168.2.14:8200 vault operator unseal `cat unsealKey1`
+  #  login `cat rootToken1`
+
+  #enable secret KV version 1
+  #sudo VAULT_ADDR="http://${IP}:8200" vault secrets enable -version=1 kv
+  grep VAULT_TOKEN ~/.bash_profile || {
+  echo export VAULT_TOKEN=`cat rootToken1` | sudo tee -a ~/.bash_profile
+  }
+
+  grep VAULT_ADDR ~/.bash_profile || {
+  echo export VAULT_ADDR=http://${IP}:8200 | sudo tee -a ~/.bash_profile
+  }
 
 
 elif [ ${CONSUL_NODE} = "leader02" ]; then
@@ -67,10 +92,10 @@ elif [ ${CONSUL_NODE} = "leader02" ]; then
   sudo killall vault &>/dev/null
 
   #lets delete old consul storage
-  sudo consul kv delete -recurse vault
+  #sudo consul kv delete -recurse vault
 
   #delete old token if present
-  [ -f /root/.vault-token ] && sudo rm /root/.vault-token
+  #[ -f /root/.vault-token ] && sudo rm /root/.vault-token
 
 
   #start vault
@@ -78,30 +103,30 @@ elif [ ${CONSUL_NODE} = "leader02" ]; then
   #sudo /usr/local/bin/vault server  -log-level=trace -config /vagrant/etc/vault/vault_conf.hcl  -dev -dev-listen-address=${IP}:8200   &> ${LOG} &
   sudo /usr/local/bin/vault server  -config /vagrant/etc/vault/vault_conf_1.hcl  &> ${LOG} &
   echo vault started
-  sleep 3 
+  #sleep 3 
+  sleep 5
 
+  #sudo apt-get update
+  #sudo apt-get install -y python-requests
+  sudo apt install -y jq
+  unsealKey2=$(cat /vagrant/SomeKey.txt)
+  echo -n $unsealKey2 > unsealKey2
 
-
-#if [[ "${HOSTNAME}" =~ "leader" ]] ; then
-
-#  vagrant ssh leader01
-#  sleep 5
-#  sudo su -
-#  echo "vault token:"
-#  cat /root/.vault-token
-#  echo -e "\nvault token is on /root/.vault-token"
+  VAULT_ADDR=http://192.168.2.13:8200 vault operator unseal `cat unsealKey2`
+  #login `cat rootToken1`
   
-  # enable secret KV version 1
-#  sudo VAULT_ADDR="http://${IP}:8200" vault secrets enable -version=1 kv
-  
-#  grep VAULT_TOKEN ~/.bash_profile || {
-#    echo export VAULT_TOKEN=\`cat /root/.vault-token\` | sudo tee -a ~/.bash_profile
-#  }
+  rootToken2=$(cat /vagrant/SomeToken.txt)
+  echo -n $rootToken2 > rootToken2
 
-#  grep VAULT_ADDR ~/.bash_profile || {
-#    echo export VAULT_ADDR=http://${IP}:8200 | sudo tee -a ~/.bash_profile
-#  }
-  
+  #enable secret KV version 1
+  #sudo VAULT_ADDR="http://${IP}:8200" vault secrets enable -version=1 kv
+  grep VAULT_TOKEN ~/.bash_profile || {
+  echo export VAULT_TOKEN=`cat rootToken2` | sudo tee -a ~/.bash_profile
+  }
+
+  grep VAULT_ADDR ~/.bash_profile || {
+  echo export VAULT_ADDR=http://${IP}:8200 | sudo tee -a ~/.bash_profile
+  }
 
 
 fi

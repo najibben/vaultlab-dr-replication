@@ -69,10 +69,8 @@ if [ ${CONSUL_NODE} = "leader01" ]; then
   echo -n $rootToken1  2>&1 | tee /vagrant/SomeToken.txt
 
   VAULT_ADDR=http://192.168.2.14:8200 vault operator unseal `cat unsealKey1`
-  #  login `cat rootToken1`
-
-  #enable secret KV version 1
-  #sudo VAULT_ADDR="http://${IP}:8200" vault secrets enable -version=1 kv
+  VAULT_ADDR=http://192.168.2.14:8200 vault login `cat rootToken1`
+  
   grep VAULT_TOKEN ~/.bash_profile || {
   echo export VAULT_TOKEN=`cat rootToken1` | sudo tee -a ~/.bash_profile
   }
@@ -80,6 +78,16 @@ if [ ${CONSUL_NODE} = "leader01" ]; then
   grep VAULT_ADDR ~/.bash_profile || {
   echo export VAULT_ADDR=http://${IP}:8200 | sudo tee -a ~/.bash_profile
   }
+
+  VAULT_ADDR=http://192.168.2.14:8200 vault write -f sys/replication/primary/enable
+  sleep 5s
+
+  secondaryToken=$(vault write -field wrapping_token sys/replication/primary/secondary-token id=najib)
+  echo -n $secondaryToken > secondaryToken
+
+  #echo -n $unsealKey1  2>&1 | tee ~/SomeFile.txt
+  echo -n $secondaryToken  2>&1 | tee /vagrant/SomeJWT.txt
+  sleep 5s
 
 
 elif [ ${CONSUL_NODE} = "leader02" ]; then
@@ -113,6 +121,7 @@ elif [ ${CONSUL_NODE} = "leader02" ]; then
   echo -n $unsealKey2 > unsealKey2
 
   VAULT_ADDR=http://192.168.2.13:8200 vault operator unseal `cat unsealKey2`
+
   #login `cat rootToken1`
   
   rootToken2=$(cat /vagrant/SomeToken.txt)

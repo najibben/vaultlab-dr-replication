@@ -64,13 +64,19 @@ if [ ${CONSUL_NODE} = "secondary01" ]; then
   echo -n $rootToken3 > rootToken3
 
   #echo -n $unsealKey1  2>&1 | tee ~/SomeFile.txt
-  echo -n $unsealKey3  2>&1 | tee /vagrant/SomeFile1.txt
+  echo -n $unsealKey3  2>&1 | tee /vagrant/SomeKey1.txt
   echo -n $rootToken3  2>&1 | tee /vagrant/SomeToken1.txt
 
   VAULT_ADDR=http://192.168.2.16:8200 vault operator unseal `cat unsealKey3`
+  VAULT_ADDR=http://192.168.2.16:8200 vault login `cat rootToken3`
+  
+  secondaryToken=$(cat /vagrant/SomeJWT.txt)
+  echo -n $secondaryToken > secondaryToken
 
-  #enable secret KV version 1
-  #sudo VAULT_ADDR="http://${IP}:8200" vault secrets enable -version=1 kv
+  VAULT_TOKEN=$(cat rootToken3) vault write sys/replication/performance/secondary/enable token=$secondaryToken
+  sleep 5
+
+  
   grep VAULT_TOKEN ~/.bash_profile || {
   echo export VAULT_TOKEN=`cat rootToken3` | sudo tee -a ~/.bash_profile
   }
@@ -79,6 +85,7 @@ if [ ${CONSUL_NODE} = "secondary01" ]; then
   echo export VAULT_ADDR=http://${IP}:8200 | sudo tee -a ~/.bash_profile
   }
 
+  
 
 elif [ ${CONSUL_NODE} = "secondary02" ]; then
     echo "Starting Consul client agent for ${CONSUL_NODE}..."
@@ -106,7 +113,7 @@ elif [ ${CONSUL_NODE} = "secondary02" ]; then
   sleep 5
 
   sudo apt install -y jq
-  unsealKey4=$(cat /vagrant/Somefile1.txt)
+  unsealKey4=$(cat /vagrant/SomeKey.txt)
   echo -n $unsealKey4 > unsealKey4
   rootToken2=$(cat /vagrant/SomeToken1.txt)
   echo -n $rootToken4 > rootToken4
@@ -116,10 +123,7 @@ elif [ ${CONSUL_NODE} = "secondary02" ]; then
   
   #sudo apt-get update
   #sudo apt-get install -y python-requests
-
-
-  #enable secret KV version 1
-  #sudo VAULT_ADDR="http://${IP}:8200" vault secrets enable -version=1 kv
+  
   grep VAULT_TOKEN ~/.bash_profile || {
   echo export VAULT_TOKEN=`cat rootToken4` | sudo tee -a ~/.bash_profile
   }

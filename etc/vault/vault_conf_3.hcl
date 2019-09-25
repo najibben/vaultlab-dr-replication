@@ -13,7 +13,8 @@ storage "consul" {
 }
 
 
-api_addr = "http://192.168.2.16:8200"
-cluster_addr = "https://192.168.2.16:8201"
+#api_addr = "http://192.168.2.16:8200"
+#cluster_addr = "https://192.168.2.16:8201"
 plugin_directory = "/vagrant/plugins/"
+disable_performance_standby = true
 ui = true

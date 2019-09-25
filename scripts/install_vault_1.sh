@@ -52,7 +52,7 @@ if [ ${CONSUL_NODE} = "secondary01" ]; then
   #start vault
   sudo cp  /vagrant/etc/consul.d/client.json  /etc/consul.d/
   #sudo /usr/local/bin/vault server  -log-level=trace -config /vagrant/etc/vault/vault_conf.hcl  -dev -dev-listen-address=${IP}:8200   &> ${LOG} &
-  sudo /usr/local/bin/vault server  -config /vagrant/etc/vault/vault_conf_3.hcl  &> ${LOG} &
+  sudo /usr/local/bin/vault server -log-level=trace -config /vagrant/etc/vault/vault_conf_3.hcl  &> ${LOG} &
   echo vault started
   sleep 5
 
@@ -75,11 +75,17 @@ if [ ${CONSUL_NODE} = "secondary01" ]; then
 
   VAULT_TOKEN=$(cat rootToken3) vault write sys/replication/performance/secondary/enable token=$secondaryToken
   sleep 5
+  vault login -method=userpass username=najib password=vault
+  vault write -f sys/replication/dr/primary/enable
+  DR_TOKEN=$(vault write sys/replication/dr/primary/secondary-token id="secondary" -format=json | jq -r .wrap_info.token)
+  echo -n $DR_TOKEN > DR_TOKEN
 
+  echo -n $DR_TOKEN  2>&1 | tee /vagrant/SomeDR.txt
+  sleep 5
   
-  grep VAULT_TOKEN ~/.bash_profile || {
-  echo export VAULT_TOKEN=`cat rootToken3` | sudo tee -a ~/.bash_profile
-  }
+  #grep VAULT_TOKEN ~/.bash_profile || {
+  #echo export VAULT_TOKEN=`cat rootToken3` | sudo tee -a ~/.bash_profile
+  #}
 
   grep VAULT_ADDR ~/.bash_profile || {
   echo export VAULT_ADDR=http://${IP}:8200 | sudo tee -a ~/.bash_profile
@@ -108,7 +114,7 @@ elif [ ${CONSUL_NODE} = "secondary02" ]; then
   #start vault
   sudo cp  /vagrant/etc/consul.d/client.json  /etc/consul.d/
   #sudo /usr/local/bin/vault server  -log-level=trace -config /vagrant/etc/vault/vault_conf.hcl  -dev -dev-listen-address=${IP}:8200   &> ${LOG} &
-  sudo /usr/local/bin/vault server  -config /vagrant/etc/vault/vault_conf_4.hcl  &> ${LOG} &
+  sudo /usr/local/bin/vault server -log-level=trace  -config /vagrant/etc/vault/vault_conf_4.hcl  &> ${LOG} &
   echo vault started
   sleep 5
 
@@ -124,9 +130,9 @@ elif [ ${CONSUL_NODE} = "secondary02" ]; then
   #sudo apt-get update
   #sudo apt-get install -y python-requests
   
-  grep VAULT_TOKEN ~/.bash_profile || {
-  echo export VAULT_TOKEN=`cat rootToken4` | sudo tee -a ~/.bash_profile
-  }
+  #grep VAULT_TOKEN ~/.bash_profile || {
+  #echo export VAULT_TOKEN=`cat rootToken4` | sudo tee -a ~/.bash_profile
+  #}
 
   grep VAULT_ADDR ~/.bash_profile || {
   echo export VAULT_ADDR=http://${IP}:8200 | sudo tee -a ~/.bash_profile

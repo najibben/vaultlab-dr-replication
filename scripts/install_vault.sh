@@ -70,8 +70,22 @@ if [ ${CONSUL_NODE} = "leader01" ]; then
 
   VAULT_ADDR=http://192.168.2.14:8200 vault operator unseal `cat unsealKey1`
   VAULT_ADDR=http://192.168.2.14:8200 vault login `cat rootToken1`
-  
+
+ VAULT_ADDR=http://192.168.2.14:8200 vault policy write example-policy - <<EOF
+  path "*" {
+  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+  }
+EOF
+
+  VAULT_ADDR=http://192.168.2.14:8200 vault auth enable userpass
+  accessor=$( VAULT_ADDR=http://192.168.2.14:8200 vault auth list -format json | jq -r '.["userpass/"].accessor')
+  VAULT_ADDR=http://192.168.2.14:8200 vault write auth/userpass/users/najib password=vault  policies=example-policy
+  VAULT_ADDR=http://192.168.2.14:8200 vault write auth/userpass/login/najib password=vault  policies=example-policy
+  entityID=$(VAULT_ADDR=http://192.168.2.14:8200 vault list -format json identity/entity/id | jq -r '.[0]')
+  VAULT_ADDR=http://192.168.2.14:8200 vault write identity/entity-alias canonical_id=$entityID mount_accessor=$accessor name=Najib
+
   grep VAULT_TOKEN ~/.bash_profile || {
+  
   echo export VAULT_TOKEN=`cat rootToken1` | sudo tee -a ~/.bash_profile
   }
 
@@ -109,7 +123,7 @@ elif [ ${CONSUL_NODE} = "leader02" ]; then
   #start vault
   sudo cp  /vagrant/etc/consul.d/client.json  /etc/consul.d/
   #sudo /usr/local/bin/vault server  -log-level=trace -config /vagrant/etc/vault/vault_conf.hcl  -dev -dev-listen-address=${IP}:8200   &> ${LOG} &
-  sudo /usr/local/bin/vault server  -config /vagrant/etc/vault/vault_conf_1.hcl  &> ${LOG} &
+  sudo /usr/local/bin/vault server -log-level=trace  -config /vagrant/etc/vault/vault_conf_1.hcl  &> ${LOG} &
   echo vault started
   #sleep 3 
   sleep 5

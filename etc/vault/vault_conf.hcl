@@ -16,4 +16,5 @@ listener "tcp" {
 api_addr = "http://192.168.2.14:8200"
 cluster_addr = "https://192.168.2.14:8201"
 plugin_directory = "/vagrant/plugins/"
+disable_performance_standby = true
 ui = true

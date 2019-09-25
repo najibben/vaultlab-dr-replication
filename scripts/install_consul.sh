@@ -74,6 +74,16 @@ elif [ ${CONSUL_NODE} = "secondconsul" ]; then
         sudo /usr/local/bin/consul agent -server -ui -client=0.0.0.0 -bind=${IP} -config-file=/vagrant/etc/consul.d/server_2.json >${LOG} &
         sleep 10
 	#}  
-fi
 
+
+elif [ ${CONSUL_NODE} = "thirdconsul" ]; then
+#elif [[ "${HOSTNAME}" =~ "secondconsul" ]] || [ "${TRAVIS}" == "true" ]; then
+  #echo server
+
+	#/usr/bin/consul members 2>/dev/null || {
+		echo "Starting Consul cluster ..."
+        sudo /usr/local/bin/consul agent -server -ui -client=0.0.0.0 -bind=${IP} -config-file=/vagrant/etc/consul.d/server_3.json >${LOG} &
+        sleep 10
+	#}  
+fi
 

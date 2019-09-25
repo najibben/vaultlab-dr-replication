@@ -20,6 +20,13 @@ Vagrant.configure(2) do |config|
     env: { "CONSUL_NODE" => "secondconsul"}
   end
 
+  config.vm.define "thirdconsul" do |c3|
+    c3.vm.hostname = "thirdconsul"
+    c3.vm.network "private_network", ip: "192.168.2.120"
+    c3.vm.provision "shell", path:"scripts/install_consul.sh",
+    env: { "CONSUL_NODE" => "thirdconsul"}
+  end
+
  
   config.vm.define "leader01" do |l1|
     l1.vm.hostname = "leader01"
@@ -57,6 +64,16 @@ s2.vm.network "forwarded_port", guest: 8201, host: 1243
 s2.vm.provision :shell, :path => "scripts/install_vault_1.sh", env: { "CONSUL_NODE" => "secondary02",
        "VAULT_ADDR" => "http://192.168.2.15:8200"}
 end
+
+config.vm.define "dr" do |s3|
+  s3.vm.hostname = "dr"
+  s3.vm.network "private_network", ip: "192.168.2.121"
+  s3.vm.network "forwarded_port", guest: 8500, host: 1244
+  s3.vm.network "forwarded_port", guest: 8200, host: 1245
+  s3.vm.network "forwarded_port", guest: 8201, host: 1246
+  s3.vm.provision :shell, :path => "scripts/install_vault_2.sh", env: { "CONSUL_NODE" => "dr",
+         "VAULT_ADDR" => "http://192.168.2.121:8200"}
+  end
 
 end
 
